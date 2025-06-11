@@ -9,13 +9,14 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Scanner;
 
 /**
  * Lox is a language specified in "Crafting Interpreters" by Robert Nystrom.
  * This is my implementation of it.
  */
 public class Lox {
+    static boolean hadError;
+
     public static void main(String[] args) throws IOException {
         if (args.length > 1) {
             System.out.println("Usage: jlox [script]");
@@ -30,6 +31,7 @@ public class Lox {
     private static void runFile(String path) throws IOException {
         byte[] bytes = Files.readAllBytes(Paths.get(path));
         run(new String(bytes, Charset.defaultCharset()));//TODO: implement run
+        if (hadError) System.exit(65); //EX_DATAERR
     }
 
     private static void runPrompt() throws IOException {
@@ -41,9 +43,15 @@ public class Lox {
             String line = br.readLine();
             if (line == null) break;
             run(line);
+            hadError = false;
         }
     }
 
+    /**
+     * Runs on string loaded in buffer.
+     * Scans for tokens, and is the base of interpreter. Not yet implemented.
+     * @param source String or piece of code to be interpreted.
+     */
     private static void run(String source) {
         Scanner scanner = new Scanner(source);
         List<Token> tokens = new ArrayList<>();
@@ -56,6 +64,26 @@ public class Lox {
         }
     }
 
+    /**
+     * Error "interface" for reporting an error.
+     * Wrapper around report with shorter syntax. <br>
+     * Where is ignored as there may not be a specific char
+     * @param line Line of error.
+     * @param message Message to print.
+     */
+    static void error(int line, String message) {
+        report(line, "", message);
+    }
 
+    /**
+     * Prints and formats an error message to stderr.
+     * @param line Line where error happened.
+     * @param where Char where error occurred.
+     * @param message Error message.
+     */
+    private static void report(int line, String where, String message) {
+        System.err.println("[" + line + "] Error" + where + ": " + message);
+        hadError = true;
+    }
 }
 
