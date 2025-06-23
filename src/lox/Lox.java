@@ -2,12 +2,10 @@ package lox;
 
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -22,15 +20,15 @@ public class Lox {
             System.out.println("Usage: jlox [script]");
             System.exit(64);//UNIX sysexists code (EX_USAGE)
         } else if (args.length == 1) {
-            runFile(args[0]); //TODO: Implement runFile
+            runFile(args[0]);
         } else {
-            runPrompt(); //TODO: Implement runPrompt
+            runPrompt();
         }
     }
 
     private static void runFile(String path) throws IOException {
         byte[] bytes = Files.readAllBytes(Paths.get(path));
-        run(new String(bytes, Charset.defaultCharset()));//TODO: implement run
+        run(new String(bytes, Charset.defaultCharset()));
         if (hadError) System.exit(65); //EX_DATAERR
     }
 

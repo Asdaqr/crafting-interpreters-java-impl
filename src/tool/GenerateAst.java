@@ -1,0 +1,66 @@
+package tool;
+
+import lox.Token;
+
+import java.io.File;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.util.Arrays;
+import java.util.List;
+
+public class GenerateAst {
+    public static void main(String[] args) throws IOException {
+        if (args.length != 1) {
+            System.out.println("Usage: java GenerateAst <output-directory>");
+            System.exit(64);
+        }
+        String outputDir = args[0];
+
+        defineAst(outputDir, "Expr", Arrays.asList(
+                "Binary   : Expr left, Token op, Expr right",
+                "Grouping : Expr expression",
+                "Literal  : Object value",
+                "Unary    : Token op, Expr right"
+                ));
+    }
+
+    private static void defineAst(
+            String outputDir, String baseName, List<String> types)
+            throws IOException {
+        String path = outputDir + File.separator + baseName + ".java";
+        PrintWriter writer = new PrintWriter(path, "UTF-8");
+        writer.println("package lox;");
+        writer.println();
+        writer.println("import java.util.List;");
+        writer.println();
+        writer.println("public abstract class " + baseName + " {");
+
+        for (String type : types) {
+            String className = type.strip().split(":")[0].strip();
+            String fields = type.split(":")[1].trim();
+            defineType(writer, baseName, className, fields);
+        }
+
+        writer.println("}");
+        writer.close();
+    }
+    private static void defineType
+            (PrintWriter writer, String baseName, String className, String fields) {
+            writer.println("    public static class " + className + " extends " + baseName + " {");
+            writer.println("        public " + className +"(" + fields + ") {");
+
+            String[] fieldArray = fields.split(",");
+            for (String field : fieldArray) {
+                field = field.strip().split(" ")[1].trim();
+                writer.println("            " + "this." + field + " = " + field + ";");
+            }
+            writer.println("        }");
+
+            for (String field : fieldArray) {
+                field = field.strip();
+                writer.println("        final " + field + ";");
+            }
+            writer.println("    }");
+
+    }
+}
