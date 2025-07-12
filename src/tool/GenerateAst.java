@@ -34,6 +34,7 @@ public class GenerateAst {
         writer.println("import java.util.List;");
         writer.println();
         writer.println("public abstract class " + baseName + " {");
+        defineVisitor(writer, baseName, types);
 
         for (String type : types) {
             String className = type.strip().split(":")[0].strip();
@@ -61,6 +62,18 @@ public class GenerateAst {
                 writer.println("        final " + field + ";");
             }
             writer.println("    }");
+
+    }
+
+    private static void defineVisitor(PrintWriter writer, String baseName, List<String> types) {
+        writer.println("");
+        writer.println("    public interface Visitor<R> {");
+        for (String type : types) {
+            String typeName = type.split(":")[0].trim();
+            writer.println("    R visit" + typeName + baseName + "("
+            + typeName + " " + baseName.toLowerCase() + ");");
+        }
+        writer.println("    }");
 
     }
 }

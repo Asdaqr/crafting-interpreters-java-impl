@@ -3,6 +3,13 @@ package lox;
 import java.util.List;
 
 public abstract class Expr {
+
+    public interface Visitor<R> {
+    R visitBinaryExpr(Binary expr);
+    R visitGroupingExpr(Grouping expr);
+    R visitLiteralExpr(Literal expr);
+    R visitUnaryExpr(Unary expr);
+    }
     public static class Binary extends Expr {
         public Binary(Expr left, Token op, Expr right) {
             this.left = left;
