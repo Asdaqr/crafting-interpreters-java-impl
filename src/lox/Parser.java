@@ -13,18 +13,34 @@ public class Parser {
     }
 
     private Expr expression() {
-        return equality();
+        return comma();
+    }
+
+    private Expr comma() {
+        Expr expr = equality();
+
+
+
+        while (match(COMMA)) {
+            Token op = previous();
+            Expr right = equality();
+            expr = new Expr.Binary(expr, op, right);
+        }
+        return expr;
     }
 
 
     private Expr equality() {
         Expr expr = comparison();
 
+
         while (match(BANG_EQUAL, EQUAL_EQUAL)) {
             Token op = previous();
-            Expr right = equality();
+            Expr right = comparison();
             expr = new Expr.Binary(expr, op, right);
         }
+
+        binaryCheck(expr);
 
         return expr;
     }
@@ -38,6 +54,8 @@ public class Parser {
             expr = new Expr.Binary(expr, op, right);
         }
 
+        binaryCheck(expr);
+
         return expr;
     }
 
@@ -50,6 +68,7 @@ public class Parser {
             expr = new Expr.Binary(expr, op, right);
         }
 
+        binaryCheck(expr);
         return expr;
     }
 
@@ -61,7 +80,7 @@ public class Parser {
             Expr right = unary();
             expr = new Expr.Binary(expr, op, right);
         }
-
+        binaryCheck(expr);
         return expr;
     }
 
@@ -146,6 +165,7 @@ public class Parser {
         return new ParseError();
     }
 
+
     private void synchronize() {
         advance();
 
@@ -165,6 +185,15 @@ public class Parser {
 
             }
             advance();
+        }
+    }
+
+    private void binaryCheck(Expr expr) {
+        if (expr instanceof Expr.Binary) {
+            Expr.Binary binary = (Expr.Binary) expr;
+            if (binary.left == null) {
+                Lox.error(binary.op, "Missing left operand.");
+            }
         }
     }
 

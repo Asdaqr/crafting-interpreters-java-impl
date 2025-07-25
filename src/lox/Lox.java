@@ -13,7 +13,9 @@ import java.util.List;
  * This is my implementation of it.
  */
 public class Lox {
-    static boolean hadError;
+    private static final Interpreter interpreter = new Interpreter();
+    static boolean hadError = false;
+    static boolean hadRuntimeError = false;
 
     public static void main(String[] args) throws IOException {
         if (args.length > 1) {
@@ -59,7 +61,7 @@ public class Lox {
 
         if(hadError) return;
 
-//        System.out.println(new AstPrinter().print(expr));
+        interpreter.interpret(expr);
     }
 
     /**
@@ -79,6 +81,12 @@ public class Lox {
         } else {
             report(token.line, " at " + token.lexeme + "'", message);
         }
+    }
+
+    static void runtimeError(RuntimeError error) {
+        System.err.println(error.getMessage() + System.lineSeparator() + "line "
+        + error.token.line + "]");
+        hadRuntimeError = true;
     }
 
     /**
