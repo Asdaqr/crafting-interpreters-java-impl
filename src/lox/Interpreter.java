@@ -1,7 +1,10 @@
 package lox;
 
-public class Interpreter implements Expr.Visitor<Object> {
+import java.util.List;
 
+public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
+
+    private Environment env = new Environment();
 
     @Override
     public Object visitBinaryExpr(Expr.Binary expr) {
@@ -82,8 +85,44 @@ public class Interpreter implements Expr.Visitor<Object> {
         return null;
     }
 
+    @Override
+    public Object visitAssignExpr(Expr.Assign expr) {
+        Object value = evaluate(expr.value);
+        env.assign(expr.name, value);
+        return value;
+    }
+
+    @Override
+    public Object visitVariableExpr(Expr.Variable expr) {
+        return env.get(expr.name);
+    }
+
     private Object evaluate(Expr expr) {
         return expr.accept(this);
+    }
+
+    @Override
+    public Void visitExpressionStmt(Stmt.Expression stmt) {
+        evaluate(stmt.expression);
+        return null;
+    }
+
+    @Override
+    public Void visitPrintStmt(Stmt.Print stmt) {
+        Object value = evaluate(stmt.expression);
+        System.out.print(stringify(value) + System.lineSeparator());
+        return null;
+    }
+
+    @Override
+    public Void visitVarStmt(Stmt.Var stmt) {
+        Object value = null;
+        if (stmt.initializer != null) {
+            value = evaluate(stmt.initializer);
+        }
+
+        env.define(stmt.name.lexeme, value);
+        return null;
     }
 
     private boolean isTruthLike(Object object) {
@@ -118,6 +157,20 @@ public class Interpreter implements Expr.Visitor<Object> {
         catch (RuntimeError error) {
             Lox.runtimeError(error);
         }
+    }
+
+    protected void interpret(List<Stmt> stmts) {
+        try {
+            for (Stmt stmt : stmts) {
+                execute(stmt);
+            }
+        } catch (RuntimeError error) {
+            Lox.runtimeError(error);
+        }
+    }
+
+    private void execute(Stmt stmt) {
+        stmt.accept(this);
     }
 
     private String stringify(Object object) {
