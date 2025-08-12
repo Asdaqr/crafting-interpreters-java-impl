@@ -101,6 +101,18 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
         return expr.accept(this);
     }
 
+    /**
+     * Note that the statements live inside the block.
+     * Therefore, this code executes a block within a lexical scope
+     * @param stmt block statement
+     * @return null
+     */
+    @Override
+    public Void visitBlockStmt(Stmt.Block stmt) {
+        executeBlock(stmt.statements, new Environment(env));
+        return null;
+    }
+
     @Override
     public Void visitExpressionStmt(Stmt.Expression stmt) {
         evaluate(stmt.expression);
@@ -171,6 +183,28 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
 
     private void execute(Stmt stmt) {
         stmt.accept(this);
+    }
+
+    /**
+     * Execute code in a given environment.
+     * If a stmt is another block, mutual recursion occurs, and this code is called to
+     * deal with the inner loop.
+     * Exits the enviorment in the end.
+     * @param stmts stmts to be executed
+     * @param env enviorment that statments are located in
+     */
+    private void executeBlock(List<Stmt> stmts, Environment env) {
+        Environment prev = this.env;
+
+        try {
+            this.env = env;
+
+            for (Stmt stmt : stmts) {
+                execute(stmt);
+            }
+        } finally {
+            this.env = prev;
+        }
     }
 
     private String stringify(Object object) {
