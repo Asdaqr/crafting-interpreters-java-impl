@@ -33,6 +33,7 @@ public class Scanner {
         keywords.put("true", TRUE);
         keywords.put("var", VAR);
         keywords.put("while", WHILE);
+        keywords.put("break", BREAK);
     }
 
     protected Scanner(String source) {
@@ -53,10 +54,10 @@ public class Scanner {
         char c = advance();
         switch (c) {
             case ')':
-                addToken(LEFT_PAREN);
+                addToken(RIGHT_PAREN);
                 break;
             case '(':
-                addToken(RIGHT_PAREN);
+                addToken(LEFT_PAREN);
                 break;
             case '{':
                 addToken(LEFT_BRACE);

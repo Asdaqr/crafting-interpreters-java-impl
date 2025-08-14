@@ -5,6 +5,8 @@ import java.util.List;
 public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
 
     private Environment env = new Environment();
+    private boolean isBreakable = false;
+    private boolean breakFlag = false;
 
     @Override
     public Object visitBinaryExpr(Expr.Binary expr) {
@@ -70,6 +72,25 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
         return expr.value;
     }
 
+    /**
+     * Evaluates left-hand side and checks if it's an OR statement and true.
+     * If so, then short-circuit and return true.
+     * If it was false and an AND, shirt-circuit false.
+     * Otherwise, evaluate the right-hand side
+     * @param expr Logical AND or OR expression
+     * @return truth value
+     */
+    @Override
+    public Object visitLogicalExpr(Expr.Logical expr) {
+        Object left = evaluate(expr.left);
+
+        if (expr.op.type == TokenType.OR) {
+            if(isTruthLike(expr.left)) return left;
+        } else if(!isTruthLike(expr.left)) return left;
+
+        return evaluate(expr.right);
+    }
+
     @Override
     public Object visitUnaryExpr(Expr.Unary expr) {
         Object right = evaluate(expr.right);
@@ -120,6 +141,18 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     }
 
     @Override
+    public Void visitIfStmt(Stmt.If stmt) {
+        if(isTruthLike(evaluate(stmt.condition))) {
+            execute(stmt.thenBranch);
+        }
+        else if(stmt.elseBranch != null) {
+            execute(stmt.elseBranch);
+        }
+
+        return null;
+    }
+
+    @Override
     public Void visitPrintStmt(Stmt.Print stmt) {
         Object value = evaluate(stmt.expression);
         System.out.print(stringify(value) + System.lineSeparator());
@@ -134,6 +167,28 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
         }
 
         env.define(stmt.name.lexeme, value);
+        return null;
+    }
+
+    @Override
+    public Void visitWhileStmt(Stmt.While stmt) {
+        isBreakable = true;
+        while(isTruthLike(evaluate(stmt.condition)) && !breakFlag) {
+            execute(stmt.body);
+        }
+
+        isBreakable = false;
+        breakFlag = false;
+        return null;
+    }
+
+    @Override
+    public Void visitBreakStmt(Stmt.Break stmt) {
+        if(isBreakable) {
+             breakFlag = true;
+        } else {
+            throw (new RuntimeError(stmt.self, "Break statement not enclosed"));
+        }
         return null;
     }
 
@@ -200,6 +255,7 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
             this.env = env;
 
             for (Stmt stmt : stmts) {
+                if (breakFlag) break;
                 execute(stmt);
             }
         } finally {

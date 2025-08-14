@@ -1,0 +1,15 @@
+var c = 0;
+while (c < 100) {
+    var b = 20;
+
+    for (var a = 0; a < 10; a = a + 2) {
+        b = b + b;
+
+        if (b> 200) {
+            break;
+        }
+        print b;
+    }
+
+    c = c + 1;
+}
