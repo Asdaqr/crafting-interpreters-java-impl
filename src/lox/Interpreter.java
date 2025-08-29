@@ -1,12 +1,33 @@
 package lox;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
 
-    private Environment env = new Environment();
+    final Environment globals = new Environment();
+    private Environment env = globals;
     private boolean isBreakable = false;
     private boolean breakFlag = false;
+
+
+    public Interpreter() {
+        //god awful code ngl
+        globals.define("clock", new LoxCallable() {
+            @Override
+            public int arity() {return 0;}
+
+            @Override
+            public Object call(Interpreter interpreter, List<Object> args) {
+                return (double) System.currentTimeMillis()/1000.0;
+            }
+
+            @Override
+            public String toString() {
+                return "<native fn>";
+            }
+        });
+    }
 
     @Override
     public Object visitBinaryExpr(Expr.Binary expr) {
@@ -33,7 +54,8 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
                 if (left instanceof String && right instanceof String) {
                     return (String)left + (String)right;
                 }
-                throw new RuntimeError(expr.op, "Oprands must be two integers or strings");
+                throw new RuntimeError(expr.op,
+                        "Operands must be two integers or strings");
             }
             case LESS -> {
                 checkNumberOperands(expr.op, left, right);
@@ -60,6 +82,31 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
         }
         //Unreachable
         return null;
+    }
+
+    @Override
+    public Object visitCallExpr(Expr.Call expr) {
+        Object callee = evaluate(expr.callee);
+
+        List<Object> args = new ArrayList<>();
+        for (Expr arg : expr.args) {
+            args.add(evaluate(arg));
+        }
+
+        if(!(callee instanceof LoxCallable)) {
+            throw new RuntimeError(expr.paren,
+                    "Can only call functions and classes");
+        }
+
+        LoxCallable function = (LoxCallable) callee;
+
+        if (args.size() != function.arity()) {
+            throw new RuntimeError(expr.paren, "Expected " + function.arity() +
+                    " args, but got " + args.size() + " args.");
+
+        }
+
+        return function.call(this, args);
     }
 
     @Override
@@ -248,7 +295,7 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
      * @param stmts stmts to be executed
      * @param env enviorment that statments are located in
      */
-    private void executeBlock(List<Stmt> stmts, Environment env) {
+    protected void executeBlock(List<Stmt> stmts, Environment env) {
         Environment prev = this.env;
 
         try {
