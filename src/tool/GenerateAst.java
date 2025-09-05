@@ -1,6 +1,5 @@
 package tool;
 
-
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -34,6 +33,7 @@ public class GenerateAst {
                 "If         : Expr condition, Stmt thenBranch," +
                             " Stmt elseBranch",
                 "Print      : Expr expression",
+                "Return     : Token keyword, Expr value",
                 "Var        : Token name, Expr initializer",
                 "While      : Expr condition, Stmt body",
                 "Break      : Token self"
